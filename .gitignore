@@ -8,9 +8,7 @@ __pycache__/
 *.png
 *.jpeg
 *.gif
-
-# C extensions
-*.so
+*.tif
 
 # Distribution / packaging
 .Python
