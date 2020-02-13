@@ -2,13 +2,15 @@
 import numpy as np
 import cv2
 import imageio
+from pygifsicle import optimize
 
-from .utils import read_image
+from .utils import read_image, overlay_mask_on_image, overlay_text_on_image
 #TODO: typing
 
 
 # TODO: обобщить на случай нескольких картинок (делать коллаж) [как отдельный класс]
-    # TODO: рисовать маску не поверх изображения, а рядом
+# TODO: рисовать маску не поверх изображения, а рядом
+# TODO: исправить баг с контурами вместо масок
 class Animask:
     """
     Base class for animask.
@@ -52,25 +54,13 @@ class Animask:
             if self.mask_rgb_color:
                 indices = np.where(mask != (0, 0, 0))
                 mask[indices[0], indices[1], :] = self.mask_rgb_color
-            layer = cv2.addWeighted(src1=self.image,
-                                    alpha=0.9,
-                                    src2=mask,
-                                    beta=self.bg_beta,
-                                    gamma=0)
-            layers.append(layer)
+            layers.append(overlay_mask_on_image(self.image, mask, self.bg_beta))
         return layers
 
     def _add_annotations(self, layers):
         # TODO: переделать, чтобы всегда было видно аннотации
         for i in np.arange(len(layers)):
-            layers[i] = cv2.putText(img=layers[i],
-                                    text=self.annotations[i],
-                                    org=(25, 25),
-                                    fontFace=cv2.FONT_HERSHEY_PLAIN,
-                                    fontScale=2,
-                                    color=(150, 0, 0),
-                                    thickness=2,
-                                    lineType=cv2.LINE_AA)
+            layers[i] = overlay_text_on_image(layers[i], self.annotations[i])
         return layers
 
     def add(self, mask, desc=None):
@@ -81,7 +71,7 @@ class Animask:
         Keyword Arguments:
             desc {str} -- description of current epoch; 'epoch [N]' if None (default: {None})
         """
-        mask = np.asarray(mask, dtype=np.uint8) * 255
+        mask = np.asarray(mask * 255, dtype=np.uint8)
         mask = cv2.resize(mask, self.mask_size[:2])
         if desc is None:
             epoch = str(self._get_epoch())
@@ -112,3 +102,4 @@ class Animask:
         if with_annots:
             layers = self._add_annotations(layers)
         imageio.mimsave(filepath, layers, duration=duration)
+        optimize(filepath)

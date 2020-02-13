@@ -3,13 +3,6 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Images
-*.jpg
-*.png
-*.jpeg
-*.gif
-*.tif
-
 # Distribution / packaging
 .Python
 .DS_Store
